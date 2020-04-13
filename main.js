@@ -41,14 +41,61 @@ const loadPuzzle = () => {
   document.body.appendChild(puzzleWrapper);
 };
 const loadSidebar = () => {
+  const dimensionsWrapper = document.createElement("div");
+  dimensionsWrapper.style.width = "100%";
+  dimensionsWrapper.style.margin = "2vh 0";
+  dimensionsWrapper.style.display = "flex";
+  dimensionsWrapper.style.justifyContent = "space-around";
+  const heightInput = document.createElement("input");
+  heightInput.value = h;
+  heightInput.style.minWidth = 0;
+  heightInput.style.maxWidth = "50%";
+  heightInput.type = "number";
+  heightInput.onchange = (e) => {
+    console.log(e.target.value);
+    h = +e.target.value;
+    while (ripples.length) ripples.pop();
+    while (nulls.length) nulls.pop();
+    _applyChanges();
+  };
+  const widthInput = document.createElement("input");
+  widthInput.value = w;
+  widthInput.style.minWidth = 0;
+  widthInput.style.maxWidth = "50%";
+  widthInput.type = "number";
+  widthInput.onchange = (e) => {
+    console.log(e.target.value);
+    w = +e.target.value;
+    while (ripples.length) ripples.pop();
+    while (nulls.length) nulls.pop();
+    _applyChanges();
+  };
+  dimensionsWrapper.appendChild(heightInput);
+  dimensionsWrapper.appendChild(widthInput);
+
   const undoBtn = document.createElement("button");
   undoBtn.innerHTML = "Undo Ripple";
+  undoBtn.style.margin = "2vh 0";
   undoBtn.onclick = undoRipple;
-  sideBarElement.appendChild(undoBtn);
 
+  sideBarElement.appendChild(dimensionsWrapper);
+  sideBarElement.appendChild(undoBtn);
   sideBarElement.appendChild(stringifiedTextarea);
 
   document.body.appendChild(sideBarElement);
+  const toggleSidebarBtn = document.createElement("button");
+  toggleSidebarBtn.innerHTML = "Show/hide sidebar";
+  toggleSidebarBtn.onclick = () => {
+    if (sideBarElement.style.display === "none") {
+      sideBarElement.style.display = "flex";
+    } else {
+      sideBarElement.style.display = "none";
+    }
+  };
+  toggleSidebarBtn.style.position = "absolute";
+  toggleSidebarBtn.style.right = 0;
+  toggleSidebarBtn.style.top = 0;
+  document.body.appendChild(toggleSidebarBtn);
 };
 const resetPuzzle = () => {
   const prevElement = document.getElementById("puzzle");
@@ -99,7 +146,7 @@ const setPuzzle = (newPuzzle) => {
 };
 const addRipple = (rowIndex, tileIndex) => {
   ripples.push([rowIndex, tileIndex]);
-  _applyRipples();
+  _applyChanges();
 };
 const toggleNull = (rowIndex, tileIndex) => {
   let nullIndex = -1;
@@ -113,14 +160,14 @@ const toggleNull = (rowIndex, tileIndex) => {
   nullIndex === -1
     ? nulls.push([rowIndex, tileIndex])
     : nulls.splice(nullIndex, 1);
-  _applyRipples();
+  _applyChanges();
 };
 const undoRipple = () => {
   ripples.pop();
-  _applyRipples();
+  _applyChanges();
 };
-const _applyRipples = () => {
-  setPuzzle(blankPuzzle(4, 4));
+const _applyChanges = () => {
+  setPuzzle(blankPuzzle(h, w));
   nulls.forEach(([rowIndex, tileIndex]) => (puzzle[rowIndex][tileIndex] = n));
   ripples.forEach(([rowIndex, tileIndex]) => {
     if (puzzle[rowIndex][tileIndex] === null) {
@@ -136,7 +183,6 @@ const _applyRipples = () => {
   });
   resetPuzzle();
 };
-
 const updateTextarea = () => {
   const stringified = JSON.stringify(puzzle)
     .split("null")
