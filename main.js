@@ -78,8 +78,45 @@ const loadSidebar = () => {
   undoBtn.style.margin = "2vh 0";
   undoBtn.onclick = undoRipple;
 
+  const randomBtn = document.createElement("button");
+  randomBtn.innerHTML = "Random Ripple";
+  randomBtn.style.margin = "2vh 0";
+  randomBtn.onclick = randomRipple;
+
+  const berserkSettingsWrapper = document.createElement("div");
+  berserkSettingsWrapper.style.width = "100%";
+  berserkSettingsWrapper.style.margin = "2vh 0";
+  berserkSettingsWrapper.style.display = "flex";
+  berserkSettingsWrapper.style.justifyContent = "space-around";
+
+  const berserkIterationsInput = document.createElement("input");
+  berserkIterationsInput.value = 10;
+  berserkIterationsInput.style.minWidth = 0;
+  berserkIterationsInput.style.maxWidth = "50%";
+  berserkIterationsInput.type = "number";
+
+  const berserkNullChanceInput = document.createElement("input");
+  berserkNullChanceInput.value = 1;
+  berserkNullChanceInput.style.minWidth = 0;
+  berserkNullChanceInput.style.maxWidth = "50%";
+  berserkNullChanceInput.type = "number";
+  berserkSettingsWrapper.appendChild(berserkIterationsInput);
+  berserkSettingsWrapper.appendChild(berserkNullChanceInput);
+
+  const berserkBtn = document.createElement("button");
+  berserkBtn.innerHTML = "Go Berserk";
+  berserkBtn.style.margin = "2vh 0";
+  berserkBtn.onclick = () =>
+    berserkRipple(
+      +berserkIterationsInput.value,
+      +berserkNullChanceInput.value / 10
+    );
+
   sideBarElement.appendChild(dimensionsWrapper);
   sideBarElement.appendChild(undoBtn);
+  sideBarElement.appendChild(randomBtn);
+  sideBarElement.appendChild(berserkSettingsWrapper);
+  sideBarElement.appendChild(berserkBtn);
   sideBarElement.appendChild(stringifiedTextarea);
 
   document.body.appendChild(sideBarElement);
@@ -145,6 +182,9 @@ const setPuzzle = (newPuzzle) => {
   newPuzzle.forEach((row) => puzzle.push(row));
 };
 const addRipple = (rowIndex, tileIndex) => {
+  if (puzzle[rowIndex][tileIndex] === n) {
+    return;
+  }
   ripples.push([rowIndex, tileIndex]);
   _applyChanges();
 };
@@ -166,6 +206,54 @@ const undoRipple = () => {
   ripples.pop();
   _applyChanges();
 };
+
+const randomRipple = () => {
+  addRipple(Math.floor(Math.random() * h), Math.floor(Math.random() * w));
+  for (let i = 0; i < 50; i++) {
+    if (isClean()) {
+      return;
+    }
+    undoRipple();
+    addRipple(Math.floor(Math.random() * h), Math.floor(Math.random() * w));
+  }
+  isClean() || undoRipple();
+};
+
+const berserkRipple = (times = 10, nullChance = 0.1) => {
+  // Decide whether to add ripple or add hole
+  for (let i = 0; i < times; i++) {
+    let tileRow = Math.floor(Math.random() * h);
+    let tileIndex = Math.floor(Math.random() * w);
+    let diceRoll = Math.random();
+    if (diceRoll < nullChance) {
+      toggleNull(tileRow, tileIndex);
+      for (let j = 0; j < 50; j++) {
+        if (isClean()) {
+          break;
+        }
+        toggleNull(tileRow, tileIndex);
+        toggleNull(
+          Math.floor(Math.random() * h),
+          Math.floor(Math.random() * w)
+        );
+      }
+    } else {
+      randomRipple();
+    }
+  }
+};
+
+const isClean = () => {
+  for (let i = 0; i < puzzle.length; i++) {
+    for (let j = 0; j < puzzle[i].length; j++) {
+      if (puzzle[i][j] > 5) {
+        return false;
+      }
+    }
+  }
+  return true;
+};
+
 const _applyChanges = () => {
   setPuzzle(blankPuzzle(h, w));
   nulls.forEach(([rowIndex, tileIndex]) => (puzzle[rowIndex][tileIndex] = n));
